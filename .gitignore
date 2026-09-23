@@ -1,0 +1,5 @@
+node_modules/
+coverage/
+发布版/
+dist/
+*.log

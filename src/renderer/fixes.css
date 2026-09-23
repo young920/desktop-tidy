@@ -1,0 +1,26 @@
+/* Keep the per-file action visible even with a long filename. */
+.file-card { min-width: 0; }
+.unselect {
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: #fff1ef;
+  color: #b94f48;
+  border: 1px solid #f2d3cf;
+  border-radius: 8px;
+  font-size: 20px;
+  line-height: 1;
+}
+.unselect:hover { background: #f9deda; color: #8f342f; }
+.empty-folder { padding: 10px 4px; color: #86928a; font-size: 12px; }
+.intro.scanned { min-height: 76px; padding: 16px 28px; }
+.intro.scanned h2 { font-family: 'Noto Sans SC', system-ui, sans-serif; font-size: 18px; margin: 3px 0; }
+.intro.scanned .intro-icon { font-size: 40px; }
+.target-choice { width: 100%; margin-top: 7px; padding: 5px 7px; border: 1px solid #e1bf73; border-radius: 6px; background: #fffaf0; color: #7b5721; font: inherit; font-size: 11px; }
+.rule { grid-template-columns: 92px 1fr 1.1fr 68px 30px; }
+.rule-priority { width: 68px; }
+#newTargetDialog label { display: grid; gap: 7px; }
+#newTargetName { width: 100%; margin-top: 2px; }
