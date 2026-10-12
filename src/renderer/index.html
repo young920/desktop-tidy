@@ -1,13 +1,32 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>桌面清洁助手</title><link rel="stylesheet" href="style.css"/></head>
 <body><main>
   <header><div class="brand"><span class="mark">✦</span><div><h1>桌面清洁助手</h1><p>看清去向，再一键整理。</p></div></div><div class="header-actions"><button class="ghost" id="resetBtn" hidden>返回初始页</button><button class="ghost" id="historyBtn">整理历史</button><button class="ghost" id="settingsBtn">设置</button><button class="scan" id="scanBtn">扫描桌面</button></div></header>
+  <nav class="module-tabs" aria-label="功能板块"><button id="tidyTab" aria-pressed="true">桌面整理</button><button id="searchTab" aria-pressed="false">文件检索</button></nav>
+  <div id="tidyPanel">
   <section class="intro" id="intro"><div><span class="eyebrow">本地处理 · 随时撤销</span><h2>让桌面回到清爽、可找回的状态。</h2><p>仅扫描桌面第一层文件，不读取文件内容。确认前不会移动任何文件。</p></div><div class="intro-icon">⌁</div></section>
   <section class="summary" id="summary"><div><b id="fileCount">—</b><span>待整理文件</span></div><div><b id="folderCount">—</b><span>建议目标文件夹</span></div><div><b id="keepCount">—</b><span>保留原位</span></div><p id="scanNote">点击「扫描桌面」开始生成整理预览。</p></section>
   <section class="canvas" id="canvas"><div class="empty"><span>⌘</span><h3>还没有整理计划</h3><p>扫描后，文件会按项目或月份显示在这里。</p></div></section>
   <footer><span id="footerNote">确认前不会移动任何文件。</span><div><button class="ghost" id="newFolderBtn">＋ 新建目标</button><button class="apply" id="applyBtn" disabled>应用整理</button></div></footer>
+  </div>
+  <section id="searchPanel" hidden>
+    <div class="search-heading"><div><span class="eyebrow">把文件找回来</span><h2>文件检索</h2><p>按文件名、路径与项目规则查找，多个条件可以一起筛选。</p></div><button class="ghost" id="refreshIndex">建立 / 更新索引</button><button class="ghost" id="stopIndex" hidden>停止扫描</button></div>
+    <div class="search-scope"><label for="searchScope">搜索范围</label><select id="searchScope"><option value="all">全电脑 · 本机磁盘</option><option value="folder">指定文件夹（含子文件夹）</option></select><button class="ghost" id="chooseSearchFolder">选择目标文件夹</button><span id="searchFolder">未选择文件夹</span></div>
+    <p class="index-note" id="indexStatus" role="status">尚未建立索引。选择搜索范围后点击「建立 / 更新索引」。</p>
+    <form id="searchForm" class="search-filters">
+      <label>主题 / 项目<input id="searchTopic" list="searchTopics" placeholder="项目名或主题名称"/><datalist id="searchTopics"></datalist></label>
+      <label>关键词<input id="searchKeywords" placeholder="例如：会议纪要 水源（同时包含）"/></label>
+      <label>文件格式<input id="searchFormats" placeholder="例如：docx, pdf, xlsx"/></label>
+      <label>时间依据<select id="searchDateField"><option value="modifiedAt">修改时间</option><option value="createdAt">创建时间</option></select></label>
+      <label>开始日期<input type="date" id="searchFrom"/></label><label>结束日期<input type="date" id="searchTo"/></label>
+      <div class="search-actions"><button class="apply" type="submit">搜索文件</button><button class="ghost" type="button" id="clearSearch">清空筛选</button></div>
+    </form>
+    <div class="result-heading"><p id="resultCount" role="status">建立索引后即可搜索。</p><div><button class="ghost" id="previousResults" disabled>上一页</button><button class="ghost" id="nextResults" disabled>下一页</button></div></div>
+    <div class="search-results" id="searchResults"><p class="search-empty">不记得文件放在哪？先选择范围，建立索引，再输入你记得的主题或名称。</p></div>
+    <p class="search-help">全电脑会递归扫描本机磁盘中的文件名与路径。系统、应用缓存与开发依赖目录、链接和无权限项会跳过。索引保存在本机；新增或移动文件后请更新索引。创建时间可能因复制而变化。</p>
+  </section>
 </main>
 <dialog id="settingsDialog"><form method="dialog" class="modal"><button class="close">×</button><span class="eyebrow">设置</span><h2>整理规则</h2><label>归档根目录 <div class="path-row"><input id="rootInput"/><button type="button" id="chooseRoot">选择…</button></div></label><p class="hint">默认位于桌面「桌面整理」。为保证可撤销，必须与桌面在同一磁盘。</p><div class="rule-head"><h3>项目与固定事务</h3><button type="button" id="addRule">＋ 添加规则</button></div><div id="rules"></div><menu><button value="cancel" class="ghost">取消</button><button value="default" id="saveSettings" class="apply">保存设置</button></menu></form></dialog>
 <dialog id="historyDialog"><form method="dialog" class="modal wide"><button class="close">×</button><span class="eyebrow">操作记录</span><h2>整理历史</h2><div id="historyList"></div><menu><button class="ghost">关闭</button></menu></form></dialog>
 <dialog id="newTargetDialog"><form id="newTargetForm" class="modal"><button type="button" class="close" id="closeNewTarget">×</button><span class="eyebrow">本次整理预览</span><h2>新建整理目标</h2><label>文件夹名称<input id="newTargetName" autocomplete="off" placeholder="例如：生态环境厅项目" maxlength="80" required/></label><p class="hint" id="newTargetHint">文件夹会创建在「桌面整理 / 进行中」；确认应用整理后才会写入磁盘。</p><menu><button type="button" class="ghost" id="cancelNewTarget">取消</button><button class="apply" type="submit">创建目标</button></menu></form></dialog>
 <template id="ruleTemplate"><div class="rule"><select><option value="project">项目</option><option value="fixed">固定事务</option></select><input class="rule-name" placeholder="例如：客户A-官网改版"/><input class="rule-keywords" placeholder="关键词；支持中英文逗号、分号、换行"/><input class="rule-priority" type="number" min="0" step="1" value="0" title="数值越大，冲突时越优先"/><button type="button" class="delete">×</button></div></template>
-<link rel="stylesheet" href="fixes.css"/><script src="plan-interactions.js"></script><script src="keyword-parser.js"></script><script src="renderer.js"></script></body></html>
+<link rel="stylesheet" href="fixes.css"/><link rel="stylesheet" href="search.css"/><script src="plan-interactions.js"></script><script src="keyword-parser.js"></script><script src="renderer.js"></script><script src="search-ui.js"></script></body></html>

@@ -1,6 +1,6 @@
 {
   "name": "desktop-tidy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "本地优先的 Windows 桌面整理助手",
   "main": "src/main.cjs",
