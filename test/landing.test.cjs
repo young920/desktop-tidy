@@ -4,7 +4,7 @@ const fs = require('node:fs');
 
 test('landing page presents the product, safety promise, and Windows trial action', () => {
   const page = fs.readFileSync('landing/index.html', 'utf8');
-  assert.match(page, /桌面文件管家/);
+  assert.match(page, /文件管家/);
   assert.match(page, /下载 Windows 版/);
   assert.match(page, /不会删除/);
 });
@@ -12,6 +12,6 @@ test('landing page presents the product, safety promise, and Windows trial actio
 test('landing actions point to the repository and a release asset instead of Pages-relative files', () => {
   const page = fs.readFileSync('landing/index.html', 'utf8');
   assert.match(page, /https:\/\/github\.com\/young920\/desktop-tidy/);
-  assert.match(page, /releases\/download\/v0\.5\.0\/DesktopFileManager-Setup\.exe/);
+  assert.match(page, /releases\/download\/v0\.6\.0\/FileManager-Setup\.exe/);
   assert.doesNotMatch(page, /\.\.\/启动桌面清洁助手\.bat/);
 });

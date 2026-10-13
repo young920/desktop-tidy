@@ -16,6 +16,7 @@
 }
 .unselect:hover { background: #f9deda; color: #8f342f; }
 .empty-folder { padding: 10px 4px; color: #86928a; font-size: 12px; }
+.app-logo { width: 39px; height: 39px; border-radius: 11px; object-fit: contain; }
 .intro.scanned { min-height: 76px; padding: 16px 28px; }
 .intro.scanned h2 { font-family: 'Noto Sans SC', system-ui, sans-serif; font-size: 18px; margin: 3px 0; }
 .intro.scanned .intro-icon { font-size: 40px; }

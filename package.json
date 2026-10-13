@@ -1,6 +1,6 @@
 {
   "name": "desktop-tidy",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "description": "本地优先的 Windows 桌面文件管理与检索工具",
   "main": "src/main.cjs",
@@ -17,11 +17,11 @@
   },
   "build": {
     "appId": "com.local.desktoptidy",
-    "productName": "桌面文件管家",
+  "productName": "文件管家",
     "asar": true,
-    "files": ["src/**/*", "package.json"],
-    "win": { "icon": "assets/desktop-tidy-icon.ico", "target": ["nsis", "portable"] },
-    "nsis": { "artifactName": "DesktopFileManager-Setup.${ext}", "oneClick": true, "perMachine": false, "createDesktopShortcut": true, "createStartMenuShortcut": true, "deleteAppDataOnUninstall": false },
-    "portable": { "artifactName": "DesktopFileManager-Portable.${ext}" }
+    "files": ["src/**/*", "assets/file-manager-logo.png", "package.json"],
+    "win": { "icon": "assets/file-manager.ico", "target": ["nsis", "portable"] },
+    "nsis": { "artifactName": "FileManager-Setup.${ext}", "oneClick": true, "perMachine": false, "createDesktopShortcut": true, "createStartMenuShortcut": true, "deleteAppDataOnUninstall": false },
+    "portable": { "artifactName": "FileManager-Portable.${ext}" }
   }
 }
