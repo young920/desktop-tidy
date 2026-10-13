@@ -5,7 +5,7 @@ const fs = require('node:fs');
 test('landing page presents the product, safety promise, and Windows trial action', () => {
   const page = fs.readFileSync('landing/index.html', 'utf8');
   assert.match(page, /桌面文件管家/);
-  assert.match(page, /下载 Windows 试用版/);
+  assert.match(page, /下载 Windows 版/);
   assert.match(page, /不会删除/);
 });
 
