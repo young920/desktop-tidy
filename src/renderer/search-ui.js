@@ -45,6 +45,7 @@
   function switchPanel(search) {
     byId('tidyPanel').hidden = search; byId('searchPanel').hidden = !search;
     byId('tidyTab').setAttribute('aria-pressed', String(!search)); byId('searchTab').setAttribute('aria-pressed', String(search));
+    byId('managerPanel').hidden = true; byId('managerTab').setAttribute('aria-pressed', 'false');
     byId('scanBtn').hidden = search; byId('resetBtn').hidden = search || !plan;
     if (search) { const topics = byId('searchTopics'); topics.replaceChildren(); for (const rule of state?.rules || []) { const option = document.createElement('option'); option.value = rule.name; topics.append(option); } }
   }

@@ -6,10 +6,13 @@ const path = require('node:path');
 const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'tidy-ui-search-'));
 app.setPath('userData', path.join(fixture, 'app-data'));
 fs.mkdirSync(path.join(fixture, '水源处'), { recursive: true });
+fs.mkdirSync(path.join(fixture, '目标文件夹'), { recursive: true });
+fs.mkdirSync(path.join(fixture, '待移动文件夹', '子目录'), { recursive: true });
 fs.writeFileSync(path.join(fixture, '水源处', '会议纪要.docx'), 'fixture');
 fs.writeFileSync(path.join(fixture, '水源处', '重复版本.pdf'), 'duplicate fixture');
+fs.writeFileSync(path.join(fixture, '待移动文件夹', '子目录', '完整内容.txt'), 'folder stays intact');
 const trashed = [];
-dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path.join(fixture, '水源处')] });
+dialog.showOpenDialog = async options => ({ canceled: false, filePaths: [options.title === '选择文件管理范围' ? fixture : options.title === '选择移动目标文件夹' ? path.join(fixture, '目标文件夹') : path.join(fixture, '水源处')] });
 require('electron').shell.trashItem = async filePath => { trashed.push(filePath); };
 let timeout = setTimeout(() => { console.error('UI test timed out'); app.exit(1); }, 20000);
 app.on('browser-window-created', (_event, win) => {
@@ -31,10 +34,22 @@ app.on('browser-window-created', (_event, win) => {
         window.confirm = () => true;
         document.querySelector('.row-select').click();
         await document.getElementById('trashSelected').onclick();
-        return { ...search, trashed: await window.tidy.searchStatus(), removedFromResults: document.querySelectorAll('.search-result').length === 0 };
+        const searchRemoved = document.querySelectorAll('.search-result').length === 0;
+        document.getElementById('managerTab').click();
+        for (let i = 0; i < 30 && document.getElementById('managerList').querySelector('.manager-item'); i++) await new Promise(resolve => setTimeout(resolve, 100));
+        await document.getElementById('managerChooseRoot').onclick();
+        await document.getElementById('managerChooseTarget').onclick();
+        const folderRow = [...document.querySelectorAll('.manager-item')].find(row => row.dataset.path.endsWith('待移动文件夹'));
+        if (!folderRow) throw new Error('folder manager did not render the selected folder');
+        folderRow.querySelector('.manager-check').click(); window.confirm = () => true;
+        await document.getElementById('managerMove').onclick();
+        const movedVisible = document.getElementById('managerStatus').textContent.includes('已移动 1 项');
+        await document.getElementById('managerUndo').onclick();
+        const undoVisible = document.getElementById('managerStatus').textContent.includes('已撤销 1 项');
+        return { ...search, removedFromResults: searchRemoved, movedVisible, undoVisible };
       })()`);
-      if (result.count !== 1 || !result.text.includes('会议纪要.docx') || !result.visible || !result.status.includes('索引就绪') || !result.removedFromResults || trashed.length !== 1) throw new Error(JSON.stringify(result));
-      console.log('PASS: folder picker, recursive indexing, combined filters, selection, recycle bin action and result refresh in Electron');
+      if (result.count !== 1 || !result.text.includes('会议纪要.docx') || !result.visible || !result.status.includes('索引就绪') || !result.removedFromResults || trashed.length !== 1 || !result.movedVisible || !result.undoVisible) throw new Error(JSON.stringify(result));
+      console.log('PASS: search filters, recycle bin action, folder browsing, whole-folder move and undo in Electron');
       clearTimeout(timeout); BrowserWindow.getAllWindows().forEach(window => window.destroy());
       // Electron still owns dictionary handles until process exit. Keep the
       // isolated temporary profile for OS cleanup instead of deleting live files.

@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { buildPlan, executePlan, undoBatch } = require('./core.cjs');
 const { scanFiles, queryFiles, trashIndexedFiles } = require('./search.cjs');
+const { validateManagerRoot, validateFolder, readFolder, moveEntries, undoMoveBatch } = require('./file-manager.cjs');
 const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
 const runFile = promisify(execFile);
@@ -19,9 +20,12 @@ async function persistSearchIndex(index) {
 
 let activePlan = null;
 const dataFile = () => path.join(app.getPath('userData'), 'desktop-tidy.json');
-function defaults() { return { archiveRoot: path.join(app.getPath('desktop'), '桌面整理'), rules: [], history: [] }; }
+function defaults() { return { archiveRoot: path.join(app.getPath('desktop'), '桌面整理'), managementRoot: null, rules: [], history: [] }; }
+function moveHistoryFile() { return path.join(app.getPath('userData'), 'file-manager-history.json'); }
+function readMoveHistory() { try { return JSON.parse(fs.readFileSync(moveHistoryFile(), 'utf8')); } catch { return []; } }
 function readStore() { try { return { ...defaults(), ...JSON.parse(fs.readFileSync(dataFile(), 'utf8')) }; } catch { return defaults(); } }
 function writeStore(store) { fs.mkdirSync(path.dirname(dataFile()), { recursive: true }); fs.writeFileSync(dataFile(), JSON.stringify(store, null, 2)); }
+function writeMoveHistory(history) { fs.mkdirSync(path.dirname(moveHistoryFile()), { recursive: true }); fs.writeFileSync(moveHistoryFile(), JSON.stringify(history, null, 2)); }
 function sameVolume(a, b) { return path.parse(path.resolve(a)).root.toLowerCase() === path.parse(path.resolve(b)).root.toLowerCase(); }
 
 function createWindow() {
@@ -103,6 +107,65 @@ ipcMain.handle('search-open', async (_event, target) => {
 });
 ipcMain.handle('search-trash', async (_event, paths) => {
   const result = await trashIndexedFiles(searchIndex, paths, filePath => shell.trashItem(filePath));
+  await persistSearchIndex(searchIndex);
+  return result;
+});
+
+ipcMain.handle('manager-state', () => ({ root: readStore().managementRoot || null, history: readMoveHistory().slice(0, 20) }));
+ipcMain.handle('manager-choose-root', async () => {
+  const result = await dialog.showOpenDialog({ title: '选择文件管理范围', properties: ['openDirectory'] });
+  if (result.canceled) return null;
+  const root = await validateManagerRoot(result.filePaths[0]);
+  const store = readStore(); store.managementRoot = root; writeStore(store);
+  return root;
+});
+ipcMain.handle('manager-read-folder', async (_event, folderPath) => {
+  const root = readStore().managementRoot;
+  if (!root) throw new Error('请先选择文件管理范围。');
+  return readFolder(root, folderPath || root);
+});
+ipcMain.handle('manager-choose-target', async (_event, startPath) => {
+  const root = readStore().managementRoot;
+  if (!root) throw new Error('请先选择文件管理范围。');
+  const result = await dialog.showOpenDialog({ title: '选择目标文件夹', defaultPath: startPath || root, properties: ['openDirectory'] });
+  if (result.canceled) return null;
+  // readFolder validates containment and resolves junctions/symlinks.
+  const selected = await readFolder(root, result.filePaths[0]);
+  return selected.current;
+});
+function rebaseSearchPaths(items, reverse = false) {
+  let changed = false;
+  for (const item of items) {
+    if (item.status !== (reverse ? 'undone' : 'moved')) continue;
+    const from = reverse ? item.destination : item.source;
+    const to = reverse ? item.source : item.destination;
+    for (const file of searchIndex.files) {
+      const relative = path.relative(from, file.path);
+      if (relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative))) {
+        file.path = relative ? path.join(to, relative) : to;
+        file.name = path.basename(file.path);
+        changed = true;
+      }
+    }
+  }
+  return changed;
+}
+ipcMain.handle('manager-move', async (_event, sourcePaths, destinationPath) => {
+  const root = readStore().managementRoot;
+  if (!root) throw new Error('请先选择文件管理范围。');
+  const batch = await moveEntries(root, sourcePaths, destinationPath);
+  if (batch.items.some(item => item.status === 'moved')) {
+    rebaseSearchPaths(batch.items);
+    const history = readMoveHistory(); history.unshift({ ...batch, root }); writeMoveHistory(history.slice(0, 50));
+    await persistSearchIndex(searchIndex);
+  }
+  return batch;
+});
+ipcMain.handle('manager-undo', async (_event, batchId) => {
+  const history = readMoveHistory(); const batch = history.find(item => item.id === batchId);
+  if (!batch) throw new Error('找不到这次移动记录。');
+  const result = await undoMoveBatch(batch.root, batch);
+  Object.assign(batch, result); rebaseSearchPaths(batch.items, true); writeMoveHistory(history);
   await persistSearchIndex(searchIndex);
   return result;
 });

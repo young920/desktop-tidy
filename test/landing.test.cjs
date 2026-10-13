@@ -12,6 +12,6 @@ test('landing page presents the product, safety promise, and Windows trial actio
 test('landing actions point to the repository and a release asset instead of Pages-relative files', () => {
   const page = fs.readFileSync('landing/index.html', 'utf8');
   assert.match(page, /https:\/\/github\.com\/young920\/desktop-tidy/);
-  assert.match(page, /releases\/download\/v0\.6\.0\/FileManager-Setup\.exe/);
+  assert.match(page, /releases\/download\/v0\.7\.0\/FileManager-Setup\.exe/);
   assert.doesNotMatch(page, /\.\.\/启动桌面清洁助手\.bat/);
 });
