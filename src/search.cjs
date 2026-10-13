@@ -54,4 +54,28 @@ function queryFiles(files, filters = {}, rules = []) {
   const offset = Math.max(0, Number(filters.offset) || 0), limit = Math.min(200, Math.max(1, Number(filters.limit) || 100));
   return { total: matches.length, items: matches.slice(offset, offset + limit), offset, limit };
 }
-module.exports = { scanFiles, queryFiles };
+
+async function trashIndexedFiles(index, requestedPaths, moveToTrash) {
+  if (!Array.isArray(requestedPaths) || requestedPaths.length > 100) throw new Error('一次最多只能将 100 个文件移入回收站。');
+  const uniquePaths = [...new Set(requestedPaths)];
+  const indexed = new Map((index.files || []).map(file => [file.path, file]));
+  for (const filePath of uniquePaths) if (!indexed.has(filePath)) throw new Error('文件未包含在当前索引中，请更新索引后重试。');
+  const moved = [], failed = [];
+  for (const filePath of uniquePaths) {
+    const record = indexed.get(filePath);
+    try {
+      const current = await fs.stat(filePath);
+      if (current.size !== record.size || current.mtime.toISOString() !== record.modifiedAt) {
+        failed.push({ path: filePath, reason: '文件在建立索引后发生变化，请更新索引后再操作。' });
+        continue;
+      }
+      await moveToTrash(filePath);
+      moved.push(filePath);
+    } catch (error) {
+      failed.push({ path: filePath, reason: error.code === 'ENOENT' ? '文件已不存在，请更新索引。' : '无法将文件移入回收站，请检查权限或文件占用。' });
+    }
+  }
+  if (moved.length) index.files = index.files.filter(file => !moved.includes(file.path));
+  return { moved, failed };
+}
+module.exports = { scanFiles, queryFiles, trashIndexedFiles };

@@ -20,7 +20,7 @@
       <label>开始日期<input type="date" id="searchFrom"/></label><label>结束日期<input type="date" id="searchTo"/></label>
       <div class="search-actions"><button class="apply" type="submit">搜索文件</button><button class="ghost" type="button" id="clearSearch">清空筛选</button></div>
     </form>
-    <div class="result-heading"><p id="resultCount" role="status">建立索引后即可搜索。</p><div><button class="ghost" id="previousResults" disabled>上一页</button><button class="ghost" id="nextResults" disabled>下一页</button></div></div>
+    <div class="result-heading"><p id="resultCount" role="status">建立索引后即可搜索。</p><div class="result-tools"><label class="select-page"><input type="checkbox" id="selectPage"/>选择本页</label><button class="ghost delete-selected" id="trashSelected" disabled>移入回收站（0）</button><button class="ghost" id="previousResults" disabled>上一页</button><button class="ghost" id="nextResults" disabled>下一页</button></div></div>
     <div class="search-results" id="searchResults"><p class="search-empty">不记得文件放在哪？先选择范围，建立索引，再输入你记得的主题或名称。</p></div>
     <p class="search-help">全电脑会递归扫描本机磁盘中的文件名与路径。系统、应用缓存与开发依赖目录、链接和无权限项会跳过。索引保存在本机；新增或移动文件后请更新索引。创建时间可能因复制而变化。</p>
   </section>

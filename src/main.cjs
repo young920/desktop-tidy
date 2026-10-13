@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const { buildPlan, executePlan, undoBatch } = require('./core.cjs');
-const { scanFiles, queryFiles } = require('./search.cjs');
+const { scanFiles, queryFiles, trashIndexedFiles } = require('./search.cjs');
 const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
 const runFile = promisify(execFile);
@@ -10,6 +10,12 @@ const runFile = promisify(execFile);
 app.setPath('userData', path.join(app.getPath('appData'), 'desktop-tidy'));
 let searchIndex = { files: [], roots: [] }, searchRunning = false, searchCancelled = false;
 const searchFile = () => path.join(app.getPath('userData'), 'file-search-index.json');
+async function persistSearchIndex(index) {
+  await fs.promises.mkdir(path.dirname(searchFile()), { recursive: true });
+  const temporary = `${searchFile()}.tmp`;
+  await fs.promises.writeFile(temporary, JSON.stringify(index));
+  await fs.promises.rename(temporary, searchFile());
+}
 
 let activePlan = null;
 const dataFile = () => path.join(app.getPath('userData'), 'desktop-tidy.json');
@@ -80,10 +86,7 @@ ipcMain.handle('search-scan', async (event, folder) => {
       }
     } });
     searchIndex = index;
-    await fs.promises.mkdir(path.dirname(searchFile()), { recursive: true });
-    const temporary = `${searchFile()}.tmp`;
-    await fs.promises.writeFile(temporary, JSON.stringify(index));
-    await fs.promises.rename(temporary, searchFile());
+    await persistSearchIndex(index);
     return { ...index, files: index.files.length };
   } finally { searchRunning = false; }
 });
@@ -97,4 +100,9 @@ ipcMain.handle('search-open', async (_event, target) => {
   if (!searchIndex.files.some(file => file.path === target) || !fs.existsSync(target)) throw new Error('文件已移动或删除，请更新索引。');
   const error = await shell.openPath(target);
   if (error) throw new Error(error);
+});
+ipcMain.handle('search-trash', async (_event, paths) => {
+  const result = await trashIndexedFiles(searchIndex, paths, filePath => shell.trashItem(filePath));
+  await persistSearchIndex(searchIndex);
+  return result;
 });

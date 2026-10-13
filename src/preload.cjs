@@ -7,5 +7,6 @@ contextBridge.exposeInMainWorld('tidy', {
   searchScan: folder => ipcRenderer.invoke('search-scan', folder), searchCancel: () => ipcRenderer.invoke('search-cancel'),
   searchQuery: filters => ipcRenderer.invoke('search-query', filters), searchReveal: target => ipcRenderer.invoke('search-reveal', target),
   searchOpen: target => ipcRenderer.invoke('search-open', target),
+  searchTrash: paths => ipcRenderer.invoke('search-trash', paths),
   onSearchProgress: callback => { const handler = (_event, progress) => callback(progress); ipcRenderer.on('search-progress', handler); return () => ipcRenderer.removeListener('search-progress', handler); }
 });

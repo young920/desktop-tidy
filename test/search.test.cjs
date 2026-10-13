@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
-const { scanFiles, queryFiles } = require('../src/search.cjs');
+const { scanFiles, queryFiles, trashIndexedFiles } = require('../src/search.cjs');
 
 test('recursive scan finds documents in nested folders, deduplicates roots and reports missing roots', async t => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'tidy-search-'));
@@ -33,4 +33,39 @@ test('cancellation is reported and does not claim complete coverage', async () =
   const result = await scanFiles([os.tmpdir()], { isCancelled: () => true });
   assert.equal(result.cancelled, true);
   assert.equal(result.files.length, 0);
+});
+
+test('trash operation only moves indexed unchanged files and removes them from the index', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'tidy-trash-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const filePath = path.join(root, 'duplicate.pdf');
+  await fs.writeFile(filePath, 'same');
+  const scanned = await scanFiles([root]);
+  const moved = [];
+  const result = await trashIndexedFiles(scanned, [filePath, filePath], async target => { moved.push(target); });
+  assert.equal(moved.length, 1);
+  assert.equal(result.moved.length, 1);
+  assert.equal(scanned.files.length, 0);
+});
+
+test('trash operation refuses a file that changed after indexing', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'tidy-trash-changed-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const filePath = path.join(root, 'document.pdf');
+  await fs.writeFile(filePath, 'before');
+  const scanned = await scanFiles([root]);
+  await new Promise(resolve => setTimeout(resolve, 20));
+  await fs.writeFile(filePath, 'changed content');
+  let didTrash = false;
+  const result = await trashIndexedFiles(scanned, [filePath], async () => { didTrash = true; });
+  assert.equal(didTrash, false);
+  assert.equal(result.failed[0].reason, '文件在建立索引后发生变化，请更新索引后再操作。');
+  assert.equal(await fs.readFile(filePath, 'utf8'), 'changed content');
+});
+
+test('trash operation rejects paths outside index and oversized selections', async () => {
+  let calls = 0;
+  await assert.rejects(() => trashIndexedFiles({ files: [] }, ['C:\\\\not-indexed.pdf'], async () => { calls++; }), /未包含在当前索引/);
+  await assert.rejects(() => trashIndexedFiles({ files: [] }, Array(101).fill('x'), async () => { calls++; }), /一次最多/);
+  assert.equal(calls, 0);
 });
