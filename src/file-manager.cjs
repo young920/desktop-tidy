@@ -87,6 +87,19 @@ async function moveEntries(rootPath, sourcePaths, destinationPath) {
   return { ...batch, moved: batch.items.filter(item => item.status === 'moved'), failed: batch.items.filter(item => item.status === 'failed') };
 }
 
+async function createFolder(rootPath, parentPath, name) {
+  if (typeof name !== 'string' || !name.trim() || name.length > 100 || /[<>:"/\\|?*\u0000-\u001f]/.test(name) || /[. ]$/.test(name) || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name)) {
+    throw new Error('文件夹名称为空或包含 Windows 不允许的字符。');
+  }
+  const root = await validateManagerRoot(rootPath);
+  const parent = await resolveInside(root, parentPath, { allowRoot: true });
+  if (!(await fs.stat(parent)).isDirectory()) throw new Error('新文件夹的上级路径无效。');
+  const destination = path.join(parent, name.trim());
+  try { await fs.mkdir(destination); }
+  catch (error) { if (error.code === 'EEXIST') throw new Error('这个位置已有同名文件或文件夹。'); throw error; }
+  return destination;
+}
+
 async function undoMoveBatch(rootPath, batch) {
   const root = await validateManagerRoot(rootPath);
   const result = { ...batch, undoneAt: new Date().toISOString(), items: batch.items.map(item => ({ ...item })) };
@@ -105,4 +118,4 @@ async function undoMoveBatch(rootPath, batch) {
   return { ...result, undone: result.items.filter(item => item.status === 'undone'), undoFailed: result.items.filter(item => item.status === 'undo_failed') };
 }
 
-module.exports = { validateManagerRoot, validateFolder, readFolder, moveEntries, undoMoveBatch };
+module.exports = { validateManagerRoot, validateFolder, readFolder, moveEntries, createFolder, undoMoveBatch };

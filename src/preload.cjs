@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('tidy', {
   managerState: () => ipcRenderer.invoke('manager-state'), managerChooseRoot: () => ipcRenderer.invoke('manager-choose-root'),
   managerReadFolder: folder => ipcRenderer.invoke('manager-read-folder', folder), managerChooseTarget: start => ipcRenderer.invoke('manager-choose-target', start),
   managerMove: (sources, destination) => ipcRenderer.invoke('manager-move', sources, destination), managerUndo: id => ipcRenderer.invoke('manager-undo', id),
+  managerCreateFolder: (parent, name) => ipcRenderer.invoke('manager-create-folder', parent, name),
   managerState: () => ipcRenderer.invoke('manager-state'), managerChooseRoot: () => ipcRenderer.invoke('manager-choose-root'),
   managerReadFolder: folder => ipcRenderer.invoke('manager-read-folder', folder), managerChooseTarget: start => ipcRenderer.invoke('manager-choose-target', start),
   managerMove: (sources, destination) => ipcRenderer.invoke('manager-move', sources, destination), managerUndo: id => ipcRenderer.invoke('manager-undo', id),

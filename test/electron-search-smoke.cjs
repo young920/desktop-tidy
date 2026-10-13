@@ -18,9 +18,11 @@ let timeout = setTimeout(() => { console.error('UI test timed out'); app.exit(1)
 app.on('browser-window-created', (_event, win) => {
   win.webContents.on('did-finish-load', async () => {
     try {
-      const result = await win.webContents.executeJavaScript(`(async () => {
+      const result = await win.webContents.executeJavaScript(`(async () => { let stage='search tab'; try {
         document.getElementById('searchTab').click();
+        stage='choose search folder';
         await document.getElementById('chooseSearchFolder').onclick();
+        stage='scan';
         await document.getElementById('refreshIndex').onclick();
         document.getElementById('searchKeywords').value = '会议';
         document.getElementById('searchFormats').value = 'docx';
@@ -33,28 +35,44 @@ app.on('browser-window-created', (_event, win) => {
         await new Promise(resolve => setTimeout(resolve, 100));
         window.confirm = () => true;
         document.querySelector('.row-select').click();
+        stage='trash result';
         await document.getElementById('trashSelected').onclick();
         const searchRemoved = document.querySelectorAll('.search-result').length === 0;
+        stage='open manager';
         document.getElementById('managerTab').click();
+        if (!document.getElementById('managerChooseRoot')?.onclick) throw new Error('Manager root picker handler missing');
         for (let i = 0; i < 30 && document.getElementById('managerList').querySelector('.manager-item'); i++) await new Promise(resolve => setTimeout(resolve, 100));
+        stage='choose manager root';
         await document.getElementById('managerChooseRoot').onclick();
-        await document.getElementById('managerChooseTarget').onclick();
+        stage='create target folder';
+        if (!document.getElementById('managerFolderForm')?.onsubmit) throw new Error('New folder form handler missing');
+        document.getElementById('managerCreateFolder').click();
+        document.getElementById('managerFolderName').value = '新建目标';
+        await document.getElementById('managerFolderForm').onsubmit({ preventDefault() {} });
+        const createdVisible = document.getElementById('managerTree').textContent.includes('新建目标');
+        stage='choose move target';
+        const targetNode = [...document.querySelectorAll('.tree-folder-name')].find(button => button.textContent === '目标文件夹');
+        if (!targetNode) throw new Error('target folder missing from folder tree');
+        targetNode.click();
         const folderRow = [...document.querySelectorAll('.manager-item')].find(row => row.dataset.path.endsWith('待移动文件夹'));
         if (!folderRow) throw new Error('folder manager did not render the selected folder');
         folderRow.querySelector('.manager-check').click(); window.confirm = () => true;
+        stage='move folder';
         await document.getElementById('managerMove').onclick();
         const movedVisible = document.getElementById('managerStatus').textContent.includes('已移动 1 项');
+        stage='undo folder move';
         await document.getElementById('managerUndo').onclick();
         const undoVisible = document.getElementById('managerStatus').textContent.includes('已撤销 1 项');
-        return { ...search, removedFromResults: searchRemoved, movedVisible, undoVisible };
+        return { ...search, removedFromResults: searchRemoved, createdVisible, movedVisible, undoVisible };
+      } catch(error) { return {stage,error:error.message,stack:error.stack}; }
       })()`);
-      if (result.count !== 1 || !result.text.includes('会议纪要.docx') || !result.visible || !result.status.includes('索引就绪') || !result.removedFromResults || trashed.length !== 1 || !result.movedVisible || !result.undoVisible) throw new Error(JSON.stringify(result));
-      console.log('PASS: search filters, recycle bin action, folder browsing, whole-folder move and undo in Electron');
+      if (result.error || result.count !== 1 || !result.text.includes('会议纪要.docx') || !result.visible || !result.status.includes('索引就绪') || !result.removedFromResults || trashed.length !== 1 || !result.createdVisible || !result.movedVisible || !result.undoVisible) throw new Error(JSON.stringify(result));
+      console.log('PASS: search filters, recycle bin action, folder browsing, target creation, whole-folder move and undo in Electron');
       clearTimeout(timeout); BrowserWindow.getAllWindows().forEach(window => window.destroy());
       // Electron still owns dictionary handles until process exit. Keep the
       // isolated temporary profile for OS cleanup instead of deleting live files.
       app.exit(0);
-    } catch (error) { console.error(error); clearTimeout(timeout); app.exit(1); }
+    } catch (error) { console.error(error.stack || error); clearTimeout(timeout); app.exit(1); }
   });
 });
 require('../src/main.cjs');

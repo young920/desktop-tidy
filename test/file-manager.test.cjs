@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
-const { readFolder, moveEntries, undoMoveBatch } = require('../src/file-manager.cjs');
+const { readFolder, moveEntries, createFolder, undoMoveBatch } = require('../src/file-manager.cjs');
 
 test('folder browser shows immediate folders and files with metadata', async t => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'file-manager-view-'));
@@ -51,4 +51,13 @@ test('move rejects paths outside the selected management root', async t => {
   await assert.rejects(() => readFolder(root, outside), /管理范围/);
   const move = await moveEntries(root, [path.join(outside, 'private.txt')], root);
   assert.match(move.failed[0].error, /管理范围/);
+});
+
+test('create folder adds a target beneath the chosen folder and prevents invalid names', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'file-manager-create-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const created = await createFolder(root, root, '项目资料');
+  assert.equal((await fs.stat(created)).isDirectory(), true);
+  await assert.rejects(() => createFolder(root, root, 'bad/name'), /Windows/);
+  await assert.rejects(() => createFolder(root, root, '项目资料'), /同名/);
 });

@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { buildPlan, executePlan, undoBatch } = require('./core.cjs');
 const { scanFiles, queryFiles, trashIndexedFiles } = require('./search.cjs');
-const { validateManagerRoot, validateFolder, readFolder, moveEntries, undoMoveBatch } = require('./file-manager.cjs');
+const { validateManagerRoot, validateFolder, readFolder, moveEntries, createFolder, undoMoveBatch } = require('./file-manager.cjs');
 const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
 const runFile = promisify(execFile);
@@ -160,6 +160,11 @@ ipcMain.handle('manager-move', async (_event, sourcePaths, destinationPath) => {
     await persistSearchIndex(searchIndex);
   }
   return batch;
+});
+ipcMain.handle('manager-create-folder', async (_event, parentPath, name) => {
+  const root = readStore().managementRoot;
+  if (!root) throw new Error('请先选择管理范围。');
+  return createFolder(root, parentPath, name);
 });
 ipcMain.handle('manager-undo', async (_event, batchId) => {
   const history = readMoveHistory(); const batch = history.find(item => item.id === batchId);
