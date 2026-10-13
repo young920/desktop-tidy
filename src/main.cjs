@@ -6,6 +6,8 @@ const { scanFiles, queryFiles } = require('./search.cjs');
 const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
 const runFile = promisify(execFile);
+// Keep the existing user data path stable across the product rename.
+app.setPath('userData', path.join(app.getPath('appData'), 'desktop-tidy'));
 let searchIndex = { files: [], roots: [] }, searchRunning = false, searchCancelled = false;
 const searchFile = () => path.join(app.getPath('userData'), 'file-search-index.json');
 
@@ -17,7 +19,7 @@ function writeStore(store) { fs.mkdirSync(path.dirname(dataFile()), { recursive:
 function sameVolume(a, b) { return path.parse(path.resolve(a)).root.toLowerCase() === path.parse(path.resolve(b)).root.toLowerCase(); }
 
 function createWindow() {
-  const win = new BrowserWindow({ width: 1320, height: 840, minWidth: 980, minHeight: 650, backgroundColor: '#f6f7f3', title: '桌面清洁助手', webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true } });
+  const win = new BrowserWindow({ width: 1320, height: 840, minWidth: 980, minHeight: 650, backgroundColor: '#f6f7f3', title: '桌面文件管家', webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true } });
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 }
 app.whenReady().then(async () => {
