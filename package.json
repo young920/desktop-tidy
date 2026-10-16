@@ -1,6 +1,6 @@
 {
   "name": "desktop-tidy",
-  "version": "0.8.0",
+  "version": "0.14.0",
   "private": true,
   "description": "本地优先的 Windows 桌面文件管理与检索工具",
   "main": "src/main.cjs",
@@ -8,6 +8,8 @@
     "start": "electron .",
     "test": "node --test test/*.test.cjs",
     "test:coverage": "c8 --check-coverage --lines 80 --functions 80 --branches 75 --reporter=text node --test test/*.test.cjs",
+    "test:e2e:manager": "electron test/electron-search-smoke.cjs",
+    "test:e2e:conversion": "electron test/electron-conversion-smoke.cjs",
     "dist": "electron-builder --win nsis portable"
   },
   "devDependencies": {
@@ -17,11 +19,36 @@
   },
   "build": {
     "appId": "com.local.desktoptidy",
-  "productName": "文件管家",
+    "productName": "文件管家",
     "asar": true,
-    "files": ["src/**/*", "assets/file-manager-logo.png", "package.json"],
-    "win": { "icon": "assets/file-manager.ico", "target": ["nsis", "portable"] },
-    "nsis": { "artifactName": "FileManager-Setup.${ext}", "oneClick": true, "perMachine": false, "createDesktopShortcut": true, "createStartMenuShortcut": true, "deleteAppDataOnUninstall": false },
-    "portable": { "artifactName": "FileManager-Portable.${ext}" }
+    "files": [
+      "src/**/*",
+      "assets/file-manager-logo.png",
+      "package.json",
+      "!node_modules/@napi-rs/canvas/**",
+      "!node_modules/@napi-rs/canvas-win32-x64-msvc/**"
+    ],
+    "win": {
+      "icon": "assets/file-manager.ico",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "artifactName": "FileManager-Setup.${ext}",
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "FileManager-Portable.${ext}"
+    }
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^4.10.38"
   }
 }

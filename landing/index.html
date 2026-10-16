@@ -3,45 +3,86 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="文件管家：整理桌面，也能找遍全电脑。所有规则和文件操作均在本机完成。" />
-  <title>文件管家｜整理桌面，也能找遍全电脑</title>
+  <meta name="description" content="文件管家：先看清每份文件，再决定它去哪里。Windows 本地文件整理、检索、管理与转换工具。" />
+  <title>文件管家｜先看清每份文件，再决定它去哪里</title>
+  <link rel="icon" href="../assets/file-manager.ico" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="nav wrap">
-    <a class="brand" href="#top"><img src="../assets/file-manager-logo.png" alt="" /><span>文件管家</span></a>
-    <nav aria-label="页面导航"><a href="#how">如何工作</a><a href="#safety">安全承诺</a></nav>
-    <a class="button button-dark small" href="https://github.com/young920/desktop-tidy">开始整理</a>
+    <a class="brand" href="#top" aria-label="文件管家首页"><img src="../assets/file-manager-logo.png" alt="" /><span>文件管家</span></a>
+    <nav aria-label="页面导航"><a href="#workflow">工作流程</a><a href="#principles">本地优先</a></nav>
+    <a class="button button-outline small" href="https://github.com/young920/desktop-tidy/releases/latest">Windows 下载 <span aria-hidden="true">↗</span></a>
   </header>
 
   <main id="top">
     <section class="hero wrap">
-      <div class="hero-copy reveal">
-        <p class="eyebrow">WINDOWS 桌面整理工具</p>
-        <h1>桌面很满，<em>心里</em>也会跟着乱。</h1>
-        <p class="lede">把散落的工作文件变回可找回、可理解的项目脉络。先看预览，再决定要不要整理。</p>
-        <div class="hero-actions"><a class="button button-coral" href="https://github.com/young920/desktop-tidy/releases/download/v0.8.0/FileManager-Setup.exe">下载 Windows 版 <span>↓</span></a><a class="text-link" href="#how">先看看怎么工作 <span>→</span></a></div>
-        <p class="quiet">本地处理 · 不读取文件正文 · 随时撤销</p>
+      <p class="eyebrow"><span></span> WINDOWS 本地文件工作区</p>
+      <h1>先看清每份文件，<br /><em>再决定它去哪里。</em></h1>
+      <p class="lede">桌面整理、文件检索、双栏管理与格式转换。每一步都清楚可见，确认之后才会执行。</p>
+      <div class="hero-actions">
+        <a class="button button-blue" href="https://github.com/young920/desktop-tidy/releases/latest">查看 Windows 下载 <span aria-hidden="true">↓</span></a>
+        <a class="text-link" href="#workflow">看看它如何工作 <span aria-hidden="true">→</span></a>
       </div>
-      <figure class="hero-image reveal delay"><img src="hero-organized-workspace.png" alt="阳光桌面上的深绿色分类文件夹、纸张与文具，呈现整理后的安定感" /><figcaption>让每份文件，都有清楚的去处。</figcaption></figure>
+      <p class="quiet">文件留在本机 <i></i> 预览后再操作 <i></i> 支持撤销</p>
+
+      <div class="workflow-rail" aria-label="整理工作流程">
+        <span>扫描桌面</span><b aria-hidden="true">→</b><span>检查建议</span><b aria-hidden="true">→</b><span>调整去向</span><b aria-hidden="true">→</b><span>确认整理</span>
+      </div>
+
+      <section class="demo-frame" id="workflow" aria-label="文件整理预览示例">
+        <div class="demo-topbar"><div><span class="demo-mark">F</span><strong>文件管家</strong><span class="demo-separator">/</span><span>桌面整理预览</span></div><span class="demo-caption"><i></i> 示例界面 · 不会操作真实文件</span></div>
+        <div class="demo-modules" aria-label="文件管家功能"><span class="current">桌面整理</span><span>文件检索</span><span>文件管理</span><span>文件转换</span></div>
+        <ol class="demo-steps" aria-label="当前整理阶段">
+          <li><b>1</b><span>扫描</span></li><li class="active"><b>2</b><span>检查建议</span></li><li><b>3</b><span>调整去向</span></li><li><b>4</b><span>确认整理</span></li>
+        </ol>
+        <div class="demo-layout">
+          <aside class="demo-sidebar">
+            <p class="demo-label">整理建议 <span>03</span></p>
+            <div class="suggestion selected"><span class="suggestion-icon">A</span><span><strong>项目资料</strong><small>2 个文件 · 可调整</small></span><i></i></div>
+            <div class="suggestion"><span class="suggestion-icon">B</span><span><strong>图片素材</strong><small>2 个文件 · 可调整</small></span></div>
+            <div class="suggestion"><span class="suggestion-icon">C</span><span><strong>待确认</strong><small>1 个文件 · 需要选择</small></span></div>
+            <div class="sidebar-note"><span>✓</span> 尚未移动任何文件</div>
+          </aside>
+          <section class="demo-table-wrap" aria-label="文件去向清单">
+            <div class="table-summary"><div><strong>5</strong><span>个文件待整理</span></div><p>建议目标均可在确认前修改</p></div>
+            <div class="demo-table" role="table" aria-label="整理预览示例">
+              <div class="table-head" role="row"><span role="columnheader">文件</span><span role="columnheader">当前位置</span><span role="columnheader">建议去向</span><span role="columnheader">状态</span></div>
+              <div class="table-row" role="row"><strong>季度总结.docx</strong><span>桌面</span><span>进行中 / 项目资料</span><em>可整理</em></div>
+              <div class="table-row" role="row"><strong>会议记录.pdf</strong><span>桌面</span><span>进行中 / 项目资料</span><em>可整理</em></div>
+              <div class="table-row" role="row"><strong>现场照片.jpg</strong><span>桌面</span><span>进行中 / 图片素材</span><em>可整理</em></div>
+              <div class="table-row" role="row"><strong>扫描件_03.png</strong><span>桌面</span><span>待确认</span><em class="needs-choice">待选择</em></div>
+            </div>
+            <div class="table-foot"><span><b></b> 所有文件仍在原位</span><span>确认后才会开始整理</span></div>
+          </section>
+        </div>
+      </section>
     </section>
 
-    <section class="proof wrap" aria-label="产品优势"><p>不猜测你的工作</p><span></span><p>不覆盖任何文件</p><span></span><p>不把内容上传云端</p></section>
+    <section class="proof wrap" aria-label="产品特点"><p>不读取文件正文</p><span></span><p>不覆盖已有文件</p><span></span><p>不上传到云端</p></section>
 
-    <section class="story wrap" id="how">
-      <div class="section-heading"><p class="eyebrow">从凌乱到清楚</p><h2>不必为了整洁，<br />失去掌控感。</h2></div>
+    <section class="story wrap">
+      <div class="section-heading"><p class="eyebrow">从看见到掌控</p><h2>每一步都有去向，<br /><em>每个决定都由你确认。</em></h2><p class="section-lede">把整理过程摊开给你看。建议可以改、文件可以保留，执行后也能撤销。</p></div>
       <ol class="steps">
-        <li><span>01</span><div><h3>扫描，但不动作</h3><p>只读取桌面第一层的文件名称、格式与时间；不会打开文档，更不会直接移动。</p></div></li>
-        <li><span>02</span><div><h3>看见每份文件的去向</h3><p>按项目、固定事务或月份给出建议。你可以拖拽、取消，或新建目标。</p></div></li>
-        <li><span>03</span><div><h3>确认后才整理</h3><p>文件逐项移动并留下记录。遇到重名、文件变化或占用，保留原文件并解释原因。</p></div></li>
+        <li><span>01</span><div><h3>扫描，但不动作</h3><p>桌面整理只读取第一层文件名、格式与时间，不打开文档内容。</p></div></li>
+        <li><span>02</span><div><h3>看见文件的去向</h3><p>按项目、固定事务或月份整理建议；你可以取消、拖拽或创建目标。</p></div></li>
+        <li><span>03</span><div><h3>确认之后再执行</h3><p>移动前会再次检查文件状态。重名或发生变化的文件会保留原位。</p></div></li>
       </ol>
     </section>
 
-    <section class="feature-band" id="safety"><div class="wrap feature-inner"><div><p class="eyebrow">给谨慎的人</p><h2>整理不是一场<br />不可逆的冒险。</h2></div><div class="feature-list"><p><strong>预览优先</strong><span>确认前，不会移动任何文件。</span></p><p><strong>无覆盖</strong><span>同名文件自动编号，原文件始终保留。</span></p><p><strong>一键撤销</strong><span>根据真实移动记录恢复，而不是重新猜测。</span></p><p><strong>只在本机</strong><span>规则、历史与文件操作都留在你的电脑里。</span></p></div></div></section>
+    <section class="principles wrap" id="principles">
+      <div class="principles-heading"><p class="eyebrow">本地优先</p><h2>安心整理，<br /><em>因为你始终看得见。</em></h2></div>
+      <div class="principle-grid">
+        <article><span>01</span><h3>预览优先</h3><p>确认之前，不会移动任何文件。</p></article>
+        <article><span>02</span><h3>不会覆盖</h3><p>遇到同名项目时保留原件，并给出清楚提示。</p></article>
+        <article><span>03</span><h3>操作可撤销</h3><p>历史记录对应真实操作，可按批次恢复。</p></article>
+        <article><span>04</span><h3>资料留在本机</h3><p>整理规则、索引和操作记录都保存在电脑上。</p></article>
+      </div>
+    </section>
 
-    <section class="closing wrap"><div class="closing-card"><p class="eyebrow">留一点空间给重要的事</p><h2>让桌面干净一点，<br />让工作轻一点。</h2><a class="button button-dark" href="https://github.com/young920/desktop-tidy/releases/download/v0.8.0/FileManager-Setup.exe">下载 Windows 版 <span>↓</span></a><p class="quiet">不会删除，不会覆盖，不会上传文件。</p></div></section>
+    <section class="closing wrap"><div class="closing-card"><div><p class="eyebrow">为 Windows 设计</p><h2>先看清楚，<br /><em>再放心整理。</em></h2></div><a class="button button-blue" href="https://github.com/young920/desktop-tidy/releases/latest">查看 Windows 下载 <span aria-hidden="true">↓</span></a></div></section>
   </main>
 
-  <footer class="wrap"><a class="brand" href="#top"><img src="../assets/file-manager-logo.png" alt="" /><span>文件管家</span></a><p>本地优先的文件管理工具</p><a href="https://github.com/young920/desktop-tidy/blob/main/README.md">使用说明</a></footer>
+  <footer class="wrap"><a class="brand" href="#top"><img src="../assets/file-manager-logo.png" alt="" /><span>文件管家</span></a><p>本地优先的 Windows 文件工具</p><a href="https://github.com/young920/desktop-tidy/blob/main/README.md">使用说明</a><a href="https://github.com/young920/desktop-tidy">GitHub 项目</a></footer>
 </body>
 </html>
