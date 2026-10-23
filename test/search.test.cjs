@@ -31,6 +31,12 @@ test('creation date filtering and pagination work independently', () => {
   assert.equal(queryFiles(files, { dateField: 'createdAt', from: '2026-08-01' }).total, 1);
   assert.equal(queryFiles(files, { offset: 1, limit: 1 }).items.length, 1);
 });
+test('search results can be sorted by modified date, creation date, or name', () => {
+  assert.equal(queryFiles(files).items[0].name, '会议纪要.pdf');
+  assert.equal(queryFiles(files, { sort: 'modified-asc' }).items[0].name, '会议纪要.DOCX');
+  assert.equal(queryFiles(files, { sort: 'created-desc' }).items[0].name, '会议纪要.pdf');
+  assert.equal(queryFiles(files, { sort: 'name-asc' }).items[0].extension, 'docx');
+});
 test('folder names are returned as standalone results for text searches', () => {
   const nestedFiles = [...files, { path: 'C:\\项目\\客户资料\\合同\\正文.docx', name: '正文.docx', extension: 'docx', createdAt: '2026-08-01T09:00:00Z', modifiedAt: '2026-09-10T09:00:00Z' }];
   const folders = [
@@ -41,10 +47,15 @@ test('folder names are returned as standalone results for text searches', () => 
   assert.equal(result.items.filter(item => item.type === 'directory').length, 2);
   assert.equal(result.items.filter(item => item.type !== 'directory').length, 1);
 });
-test('folder results are omitted without a text query and when a file format is specified', () => {
+test('folders can be filtered as a type and combined with selected file formats', () => {
   const folders = [{ path: 'C:\\项目\\客户资料', name: '客户资料', type: 'directory', createdAt: '2026-08-01T09:00:00Z', modifiedAt: '2026-09-10T09:00:00Z' }];
   assert.equal(queryFiles(files, {}, [], folders).items.some(item => item.type === 'directory'), false);
   assert.equal(queryFiles(files, { keywords: '客户资料', formats: 'docx' }, [], folders).items.some(item => item.type === 'directory'), false);
+  const folderOnly = queryFiles(files, { formats: '文件夹' }, [], folders);
+  assert.equal(folderOnly.total, 1);
+  assert.equal(folderOnly.items[0].type, 'directory');
+  const combined = queryFiles(files, { formats: 'pdf,folder' }, [], folders);
+  assert.deepEqual(combined.items.map(item => item.type || item.extension), ['pdf', 'directory']);
 });
 test('incremental indexing adds new files and folders, removes deleted paths, and skips unchanged-file stats', async t => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'tidy-search-incremental-'));

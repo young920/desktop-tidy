@@ -151,7 +151,10 @@ function queryFiles(files, filters = {}, rules = [], folders = []) {
   const topic = String(filters.topic || '').trim().toLowerCase();
   const rule = rules.find(rule => rule.name.toLowerCase() === topic);
   const aliases = topic ? [topic, ...(rule?.keywords || []).filter(Boolean).map(word => String(word).toLowerCase())] : [];
-  const formats = String(filters.formats || '').toLowerCase().split(/[,，;；\s]+/).map(word => word.replace(/^\./, '')).filter(Boolean);
+  const formats = String(filters.formats || '').toLowerCase().split(/[,，;；\s]+/).map(word => word.replace(/^\./, '')).filter(Boolean)
+    .map(format => ['folder', 'folders', 'directory', 'directories', '文件夹'].includes(format) ? '__folder__' : format);
+  const hasTypeFilter = formats.length > 0, includeFolders = formats.includes('__folder__');
+  const fileFormats = formats.filter(format => format !== '__folder__');
   const field = filters.dateField === 'createdAt' ? 'createdAt' : 'modifiedAt';
   const from = filters.from ? new Date(`${filters.from}T00:00:00`).getTime() : -Infinity;
   const to = filters.to ? new Date(`${filters.to}T23:59:59.999`).getTime() : Infinity;
@@ -162,12 +165,21 @@ function queryFiles(files, filters = {}, rules = [], folders = []) {
   };
   const matches = files.filter(file => {
     const date = Date.parse(file[field]);
-    return matchesText(file) && (!formats.length || formats.includes(file.extension)) && date >= from && date <= to;
+    return matchesText(file) && (!hasTypeFilter || fileFormats.includes(file.extension)) && date >= from && date <= to;
   });
-  if ((aliases.length || words.length) && !formats.length) {
+  if (includeFolders || ((aliases.length || words.length) && !hasTypeFilter)) {
     matches.push(...folders.filter(folder => matchesText(folder) && Date.parse(folder[field]) >= from && Date.parse(folder[field]) <= to));
   }
-  matches.sort((a, b) => Date.parse(b[field]) - Date.parse(a[field]) || a.path.localeCompare(b.path));
+  const sort = filters.sort || 'modified-desc';
+  const sortDate = {
+    'modified-desc': ['modifiedAt', -1], 'modified-asc': ['modifiedAt', 1],
+    'created-desc': ['createdAt', -1], 'created-asc': ['createdAt', 1]
+  }[sort];
+  matches.sort((a, b) => {
+    if (sort === 'name-asc') return a.name.localeCompare(b.name, 'zh-CN', { numeric: true, sensitivity: 'base' }) || a.path.localeCompare(b.path, 'zh-CN');
+    const [sortField, direction] = sortDate || ['modifiedAt', -1];
+    return direction * (Date.parse(a[sortField]) - Date.parse(b[sortField])) || a.path.localeCompare(b.path, 'zh-CN');
+  });
   const offset = Math.max(0, Number(filters.offset) || 0), limit = Math.min(200, Math.max(1, Number(filters.limit) || 100));
   return { total: matches.length, items: matches.slice(offset, offset + limit), offset, limit };
 }

@@ -2,6 +2,57 @@
   const byId = id => document.getElementById(id);
   let folder = null, running = false, offset = 0, total = 0, query = {}, status = null;
   const selectedPaths = new Set();
+  const selectedFormats = new Set();
+  const formatLabels = { folder: '文件夹' };
+  const formatToken = value => {
+    const token = String(value || '').trim().toLowerCase().replace(/^\./, '');
+    return ['文件夹', 'folders', 'directory', 'directories'].includes(token) ? 'folder' : token;
+  };
+  function renderFormats() {
+    const chips = byId('searchFormatChips');
+    chips.replaceChildren();
+    byId('searchFormats').value = [...selectedFormats].join(',');
+    for (const token of selectedFormats) {
+      const chip = document.createElement('span'); chip.className = 'search-format-chip';
+      const label = document.createElement('span'); label.textContent = formatLabels[token] || `.${token}`;
+      const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'chip-remove'; remove.textContent = '×'; remove.setAttribute('aria-label', `移除 ${label.textContent}`);
+      remove.onclick = () => { selectedFormats.delete(token); syncFormatOptions(); renderFormats(); };
+      chip.append(label, remove); chips.append(chip);
+    }
+  }
+  function syncFormatOptions() {
+    for (const option of byId('searchFormatOptions').querySelectorAll('input[type="checkbox"]')) option.checked = selectedFormats.has(option.value);
+  }
+  function addFormatValues(value) {
+    const tokens = String(value || '').split(/[,，;；\s]+/).map(formatToken).filter(token => token === 'folder' || /^[\p{L}\p{N}][\p{L}\p{N}._+-]*$/u.test(token));
+    tokens.forEach(token => selectedFormats.add(token));
+    syncFormatOptions(); renderFormats();
+  }
+  function commitFormatInput() {
+    const input = byId('searchFormatInput');
+    if (!input.value.trim()) return;
+    addFormatValues(input.value); input.value = '';
+  }
+  byId('searchFormatToggle').onclick = () => {
+    const panel = byId('searchFormatOptions'); panel.hidden = !panel.hidden;
+    byId('searchFormatToggle').setAttribute('aria-expanded', String(!panel.hidden));
+    if (!panel.hidden) byId('searchFormatInput').focus();
+  };
+  byId('searchFormatInput').addEventListener('keydown', event => {
+    if (event.key === 'Enter') { event.preventDefault(); commitFormatInput(); }
+    if (event.key === 'Escape') { byId('searchFormatOptions').hidden = true; byId('searchFormatToggle').setAttribute('aria-expanded', 'false'); }
+  });
+  byId('searchFormatInput').addEventListener('change', commitFormatInput);
+  for (const option of byId('searchFormatOptions').querySelectorAll('input[type="checkbox"]')) {
+    option.addEventListener('change', () => { option.checked ? selectedFormats.add(option.value) : selectedFormats.delete(option.value); renderFormats(); });
+  }
+  document.addEventListener('click', event => {
+    if (!byId('searchFormatPicker').contains(event.target)) { byId('searchFormatOptions').hidden = true; byId('searchFormatToggle').setAttribute('aria-expanded', 'false'); }
+  });
+  byId('searchForm').addEventListener('reset', () => {
+    selectedFormats.clear(); byId('searchFormatInput').value = ''; byId('searchFormatOptions').hidden = true;
+    byId('searchFormatToggle').setAttribute('aria-expanded', 'false'); syncFormatOptions(); renderFormats();
+  });
   function describeIndex(index) {
     const partial = index.cancelled || index.limited;
     const folderCount = Number(index.folders) || 0;
@@ -80,7 +131,7 @@
   byId('fullRebuildIndex').onclick = () => runIndexUpdate('full');
   byId('stopIndex').onclick = async () => { await window.tidy.searchCancel(); byId('indexStatus').textContent = '正在停止扫描，已扫描文件会保留在部分索引中…'; };
   window.tidy.onSearchProgress(progress => { byId('indexStatus').textContent = `${progress.incremental ? '正在增量更新' : '正在全量扫描'} · ${progress.files.toLocaleString()} 个文件 · ${Number(progress.folders || 0).toLocaleString()} 个文件夹 · ${progress.errors} 项无法访问 · ${progress.currentPath}`; });
-  byId('searchForm').onsubmit = event => { event.preventDefault(); query = { topic: byId('searchTopic').value, keywords: byId('searchKeywords').value, formats: byId('searchFormats').value, dateField: byId('searchDateField').value, from: byId('searchFrom').value, to: byId('searchTo').value }; offset = 0; showResults(); };
+  byId('searchForm').onsubmit = event => { event.preventDefault(); commitFormatInput(); query = { topic: byId('searchTopic').value, keywords: byId('searchKeywords').value, formats: byId('searchFormats').value, dateField: byId('searchDateField').value, sort: byId('searchSort').value, from: byId('searchFrom').value, to: byId('searchTo').value }; offset = 0; showResults(); };
   byId('clearSearch').onclick = () => { byId('searchForm').reset(); query = {}; offset = 0; showResults(); };
   byId('selectPage').onchange = () => { for (const checkbox of document.querySelectorAll('.row-select')) { checkbox.checked = byId('selectPage').checked; const row = checkbox.closest('.search-result'); const filePath = row?.querySelector('.file-path')?.textContent; if (filePath) checkbox.checked ? selectedPaths.add(filePath) : selectedPaths.delete(filePath); } pageControls(); };
   byId('trashSelected').onclick = async () => {

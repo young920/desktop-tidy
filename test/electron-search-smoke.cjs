@@ -40,17 +40,29 @@ app.on('browser-window-created', (_event, win) => {
         await document.getElementById('chooseSearchFolder').onclick();
         stage='scan';
         await document.getElementById('refreshIndex').onclick();
+        const formatToggle = document.getElementById('searchFormatToggle'); formatToggle.click();
+        document.querySelector('#searchFormatOptions input[value="docx"]').click();
+        document.querySelector('#searchFormatOptions input[value="folder"]').click();
+        const formatMultiSelectWorks = document.getElementById('searchFormats').value === 'docx,folder' && !document.getElementById('searchFormatOptions').hidden;
+        const formatInput = document.getElementById('searchFormatInput'); formatInput.value = 'pdf';
+        formatInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        const formatTextEntryWorks = document.getElementById('searchFormats').value === 'docx,folder,pdf' && formatInput.value === '';
+        const sortControlWorks = [...document.getElementById('searchSort').options].some(option => option.value === 'modified-desc') && [...document.getElementById('searchSort').options].some(option => option.value === 'created-desc');
         document.getElementById('searchKeywords').value = '会议';
         document.getElementById('searchFormats').value = 'docx';
         document.getElementById('searchForm').requestSubmit();
         await new Promise(resolve => setTimeout(resolve, 100));
         const search = { count: document.querySelectorAll('.search-result').length, text: document.getElementById('searchResults').textContent, status: document.getElementById('indexStatus').textContent, visible: !document.getElementById('searchPanel').hidden };
         document.getElementById('searchForm').reset();
+        formatToggle.click();
+        document.querySelector('#searchFormatOptions input[value="docx"]').click();
+        document.querySelector('#searchFormatOptions input[value="folder"]').click();
         document.getElementById('searchKeywords').value = '客户项目资料';
         document.getElementById('searchForm').requestSubmit();
         await new Promise(resolve => setTimeout(resolve, 100));
         const folderResult = document.querySelector('.search-folder-result');
         if (!folderResult) throw new Error('matching folder was not shown as an independent result');
+        const folderAndFormatSearchWorks = document.getElementById('searchFormats').value === 'docx,folder' && document.querySelectorAll('.search-folder-result').length === 1 && [...document.querySelectorAll('.search-result strong')].some(node => node.textContent === '交付文档.docx');
         await folderResult.querySelector('button').onclick();
         await folderResult.querySelectorAll('button')[1].onclick();
         const folderSearchWorks = folderResult.textContent.includes('客户项目资料');
@@ -59,6 +71,15 @@ app.on('browser-window-created', (_event, win) => {
         window.confirm = () => true;
         await document.getElementById('fullRebuildIndex').onclick();
         const fullRebuildWorks = document.getElementById('indexStatus').textContent.includes('全量重建完成') && document.getElementById('indexStatus').textContent.includes('全量扫描');
+        document.getElementById('searchForm').reset();
+        document.getElementById('searchKeywords').value = '水源处';
+        document.getElementById('searchFormats').value = 'docx,pdf';
+        document.getElementById('searchSort').value = 'name-asc';
+        document.getElementById('searchForm').requestSubmit();
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const orderedNames = [...document.querySelectorAll('#searchResults .search-result:not(.search-folder-result) strong')].map(node => node.textContent);
+        const expectedNameOrder = [...orderedNames].sort((a, b) => a.localeCompare(b, 'zh-CN', { numeric: true, sensitivity: 'base' }));
+        const sortOrderWorks = orderedNames.length === 3 && orderedNames.join('|') === expectedNameOrder.join('|');
         document.getElementById('searchForm').reset();
         document.getElementById('searchFormats').value = 'pdf';
         document.getElementById('searchForm').requestSubmit();
@@ -220,10 +241,10 @@ app.on('browser-window-created', (_event, win) => {
         const rightCreateWorks = document.getElementById('managerDualTargetList').textContent.includes('右侧新文件夹');
         document.getElementById('managerSingleMode').click();
         const singleModeRestored = !document.getElementById('managerBrowser').hidden && document.getElementById('managerContent').parentElement.id === 'managerBrowser';
-        return { ...search, removedFromResults: searchRemoved, folderSearchWorks, incrementalUpdateWorks, fullRebuildWorks, defaultDual, createdVisible, createdDebug, externalTargetVisible, movedVisible, undoVisible, dualPanesVisible, fullscreenWorks, shrinkWorks, leftSearchWorks, rightSearchWorks, leftScrollKeepsActions, paneScrollIndependent, targetPaneShowsContents, targetBackWorks, targetForwardWorks, sourceInside, sourceBackWorks, sourceForwardWorks, sourceBreadcrumbJumpWorks, targetBreadcrumbJumpWorks, dragMoveWorks, dualUndoWorks, openWorks, rightToLeftWorks, returnedRight, renameWorks, renameUndoWorks, recycleBinWorks, leftCreateWorks, rightCreateWorks, singleModeRestored };
+      return { ...search, removedFromResults: searchRemoved, folderSearchWorks, folderAndFormatSearchWorks, formatMultiSelectWorks, formatTextEntryWorks, sortControlWorks, sortOrderWorks, incrementalUpdateWorks, fullRebuildWorks, defaultDual, createdVisible, createdDebug, externalTargetVisible, movedVisible, undoVisible, dualPanesVisible, fullscreenWorks, shrinkWorks, leftSearchWorks, rightSearchWorks, leftScrollKeepsActions, paneScrollIndependent, targetPaneShowsContents, targetBackWorks, targetForwardWorks, sourceInside, sourceBackWorks, sourceForwardWorks, sourceBreadcrumbJumpWorks, targetBreadcrumbJumpWorks, dragMoveWorks, dualUndoWorks, openWorks, rightToLeftWorks, returnedRight, renameWorks, renameUndoWorks, recycleBinWorks, leftCreateWorks, rightCreateWorks, singleModeRestored };
       } catch(error) { return {stage,error:error.message,stack:error.stack}; }
       })()`);
-      if (result.error || result.count !== 1 || !result.text.includes('会议纪要.docx') || !result.visible || !result.status.includes('索引就绪') || !result.removedFromResults || !result.folderSearchWorks || !result.incrementalUpdateWorks || !result.fullRebuildWorks || !revealed.some(filePath => filePath.endsWith('客户项目资料')) || !opened.some(filePath => filePath.endsWith('客户项目资料')) || trashed.length !== 2 || !trashed.some(filePath => filePath.endsWith('待删除.txt')) || !opened.some(filePath => filePath.endsWith('目标说明.txt')) || !result.defaultDual || !result.createdVisible || !result.externalTargetVisible || !result.movedVisible || !result.undoVisible || !result.dualPanesVisible || !result.fullscreenWorks || !result.shrinkWorks || !result.leftSearchWorks || !result.rightSearchWorks || !result.leftScrollKeepsActions || !result.paneScrollIndependent || !result.targetPaneShowsContents || !result.targetBackWorks || !result.targetForwardWorks || !result.sourceInside || !result.sourceBackWorks || !result.sourceForwardWorks || !result.sourceBreadcrumbJumpWorks || !result.targetBreadcrumbJumpWorks || !result.dragMoveWorks || !result.dualUndoWorks || !result.openWorks || !result.rightToLeftWorks || !result.returnedRight || !result.renameWorks || !result.renameUndoWorks || !result.recycleBinWorks || !result.leftCreateWorks || !result.rightCreateWorks || !result.singleModeRestored) throw new Error(JSON.stringify(result));
+      if (result.error || result.count !== 1 || !result.text.includes('会议纪要.docx') || !result.visible || !result.status.includes('索引就绪') || !result.removedFromResults || !result.folderSearchWorks || !result.folderAndFormatSearchWorks || !result.formatMultiSelectWorks || !result.formatTextEntryWorks || !result.sortControlWorks || !result.sortOrderWorks || !result.incrementalUpdateWorks || !result.fullRebuildWorks || !revealed.some(filePath => filePath.endsWith('客户项目资料')) || !opened.some(filePath => filePath.endsWith('客户项目资料')) || trashed.length !== 2 || !trashed.some(filePath => filePath.endsWith('待删除.txt')) || !opened.some(filePath => filePath.endsWith('目标说明.txt')) || !result.defaultDual || !result.createdVisible || !result.externalTargetVisible || !result.movedVisible || !result.undoVisible || !result.dualPanesVisible || !result.fullscreenWorks || !result.shrinkWorks || !result.leftSearchWorks || !result.rightSearchWorks || !result.leftScrollKeepsActions || !result.paneScrollIndependent || !result.targetPaneShowsContents || !result.targetBackWorks || !result.targetForwardWorks || !result.sourceInside || !result.sourceBackWorks || !result.sourceForwardWorks || !result.sourceBreadcrumbJumpWorks || !result.targetBreadcrumbJumpWorks || !result.dragMoveWorks || !result.dualUndoWorks || !result.openWorks || !result.rightToLeftWorks || !result.returnedRight || !result.renameWorks || !result.renameUndoWorks || !result.recycleBinWorks || !result.leftCreateWorks || !result.rightCreateWorks || !result.singleModeRestored) throw new Error(JSON.stringify(result));
       console.log('PASS: folder-name search and incremental update skip unchanged file stats in Electron');
       clearTimeout(timeout); BrowserWindow.getAllWindows().forEach(window => window.destroy());
       // Electron still owns dictionary handles until process exit. Keep the
